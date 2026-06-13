@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Let's Read!">
+<title>Let's Read!</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #FFF8F0;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    overflow-x: hidden;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #3C3489;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  .category-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 1.2rem;
+    width: 100%;
+    max-width: 400px;
+  }
+  .cat-btn {
+    border: 2px solid #ccc;
+    border-radius: 99px;
+    padding: 6px 16px;
+    font-size: 15px;
+    cursor: pointer;
+    background: white;
+    color: #555;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .cat-btn.sel {
+    background: #EEEDFE;
+    border-color: #7F77DD;
+    color: #3C3489;
+  }
+  .word-card {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    padding: 2rem 1.5rem 1.5rem;
+    text-align: center;
+    width: 100%;
+    max-width: 380px;
+    margin-bottom: 1.2rem;
+  }
+  .word-emoji {
+    font-size: 90px;
+    line-height: 1;
+    margin-bottom: 1rem;
+    display: block;
+  }
+  .word-text {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 1.2rem;
+  }
+  .letter {
+    font-size: 56px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.1s;
+    display: inline-block;
+    line-height: 1;
+  }
+  .letter:active { transform: scale(1.3); }
+  .letter.bounce { animation: bounce 0.4s ease; }
+  @keyframes bounce {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+  }
+  .say-btn {
+    background: #1D9E75;
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 14px 32px;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    max-width: 220px;
+    transition: background 0.15s;
+  }
+  .say-btn:active { background: #0F6E56; }
+  .letter-pills {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.2rem;
+    width: 100%;
+    max-width: 380px;
+  }
+  .pill {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .pill:active { transform: scale(0.9); }
+  .nav-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    max-width: 380px;
+    margin-bottom: 1rem;
+  }
+  .nav-btn {
+    flex: 1;
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #444;
+    transition: background 0.1s;
+  }
+  .nav-btn:active { background: #f0f0f0; }
+  .progress {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ddd;
+    transition: background 0.2s;
+  }
+  .dot.done { background: #5DCAA5; }
+  .dot.cur { background: #7F77DD; }
+</style>
+</head>
+<body>
+
+<h1>📖 Let's Read!</h1>
+
+<div class="category-row" id="cats"></div>
+
+<div class="word-card">
+  <span class="word-emoji" id="emoji"></span>
+  <div class="word-text" id="letters"></div>
+  <button class="say-btn" onclick="sayWord()">🔊 Say it!</button>
+</div>
+
+<div class="letter-pills" id="pills"></div>
+
+<div class="nav-row">
+  <button class="nav-btn" onclick="prev()">← Back</button>
+  <button class="nav-btn" onclick="next()">Next →</button>
+</div>
+
+<div class="progress" id="progress"></div>
+
+<script>
+const categories = {
+  "🐾 Animals": [
+    {word:"CAT",emoji:"🐱"},{word:"DOG",emoji:"🐶"},{word:"COW",emoji:"🐮"},
+    {word:"HEN",emoji:"🐔"},{word:"PIG",emoji:"🐷"},{word:"BEE",emoji:"🐝"}
+  ],
+  "🍎 Food": [
+    {word:"EGG",emoji:"🥚"},{word:"CUP",emoji:"☕"},{word:"PIE",emoji:"🥧"},
+    {word:"JAM",emoji:"🍓"},{word:"PEA",emoji:"🫛"},{word:"FIG",emoji:"🫐"}
+  ],
+  "🏠 Home": [
+    {word:"BED",emoji:"🛏️"},{word:"BUS",emoji:"🚌"},{word:"CAR",emoji:"🚗"},
+    {word:"BAG",emoji:"👜"},{word:"BOX",emoji:"📦"},{word:"HAT",emoji:"🎩"}
+  ],
+  "⭐ Fun": [
+    {word:"SUN",emoji:"☀️"},{word:"FUN",emoji:"🎉"},{word:"RUN",emoji:"🏃"},
+    {word:"HOP",emoji:"🐰"},{word:"BIG",emoji:"🐘"},{word:"RED",emoji:"🔴"}
+  ]
+};
+
+const colors = ["#D4537E","#7F77DD","#1D9E75","#D85A30","#185FA5","#BA7517"];
+const bgColors = ["#FBEAF0","#EEEDFE","#E1F5EE","#FAECE7","#E6F1FB","#FAEEDA"];
+
+let catKeys = Object.keys(categories);
+let currentCat = catKeys[0];
+let index = 0;
+let seen = {};
+catKeys.forEach(k => seen[k] = new Set());
+
+function getWords() { return categories[currentCat]; }
+function current() { return getWords()[index]; }
+
+function renderCats() {
+  document.getElementById("cats").innerHTML = catKeys.map(k =>
+    `<button class="cat-btn${k===currentCat?' sel':''}" onclick="setCat('${k}')">${k}</button>`
+  ).join("");
+}
+
+function setCat(k) { currentCat = k; index = 0; render(); renderCats(); }
+
+function render() {
+  const w = current();
+  seen[currentCat].add(index);
+  document.getElementById("emoji").textContent = w.emoji;
+  document.getElementById("letters").innerHTML = w.word.split("").map((l,i) =>
+    `<span class="letter" style="color:${colors[i%colors.length]}" onclick="sayLetter('${l}',this)">${l}</span>`
+  ).join("");
+  const shuffled = w.word.split("").map((l,i) => ({l,i})).sort(()=>Math.random()-0.5);
+  document.getElementById("pills").innerHTML = shuffled.map(({l,i}) =>
+    `<div class="pill" style="color:${colors[i%colors.length]};background:${bgColors[i%bgColors.length]}" onclick="sayLetter('${l}',this)">${l}</div>`
+  ).join("");
+  renderProgress();
+}
+
+function renderProgress() {
+  document.getElementById("progress").innerHTML = getWords().map((_,i) => {
+    let cls = seen[currentCat].has(i) ? "done" : "";
+    if (i === index) cls = "cur";
+    return `<div class="dot ${cls}"></div>`;
+  }).join("");
+}
+
+function sayWord() {
+  const w = current();
+  document.querySelectorAll(".letter").forEach((el,i) => {
+    setTimeout(()=>{ el.classList.add("bounce"); setTimeout(()=>el.classList.remove("bounce"),400); }, i*200);
+  });
+  speak(w.word.toLowerCase(), 0.65);
+}
+
+function sayLetter(l, el) {
+  el.classList.add("bounce");
+  setTimeout(()=>el.classList.remove("bounce"), 400);
+  speak(l.toLowerCase(), 0.8);
+}
+
+function speak(text, rate) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = rate; u.pitch = 1.1; u.lang = "en-US";
+  window.speechSynthesis.speak(u);
+}
+
+function next() { index = (index+1) % getWords().length; render(); }
+function prev() { index = (index-1+getWords().length) % getWords().length; render(); }
+
+renderCats();
+render();
+</script>
+</body>
+</html>
